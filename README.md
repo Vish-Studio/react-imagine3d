@@ -2,7 +2,7 @@
 An interior design portfolio website created with React js.
 
 ## Dependencies:
-- Node : v16.20.2
+- Node : v24.x
 - Gsap
 - Styled components
 - Contentful (CMS)
