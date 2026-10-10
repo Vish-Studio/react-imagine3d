@@ -6,6 +6,7 @@ import Loader from "../../components/loader/loader";
 import { usePageLoading } from "../../context/LoadingContext";
 import { useQuery } from "@apollo/client";
 import PROJECT_ITEMS_QUERY from "../../gql-query/ProjectItemsQuery";
+import { trackEvent } from "../../utils/analytics";
 
 // Styled Components for Projects Page
 const ProjectGrid = styled.div`
@@ -206,7 +207,10 @@ const Projects = () => {
           <button
             key={option}
             className={activeFilter === option ? 'active' : ''}
-            onClick={() => setActiveFilter(option)}
+            onClick={() => {
+              trackEvent('project_filter', { filter: option });
+              setActiveFilter(option);
+            }}
           >
             {option}
           </button>
@@ -219,6 +223,12 @@ const Projects = () => {
             to={`/projects/${item.slug}`}
             key={item.slug || index}
             delay={`${index * 0.1}s`}
+            onClick={() => trackEvent('project_click', {
+              project_slug: item.slug,
+              project_type: item.projectType,
+              source: 'grid',
+              position: index + 1,
+            })}
           >
             <div className="image-wrapper">
               {item.heroImage && (

@@ -1,16 +1,17 @@
 import React, { useRef, useState } from "react";
 import StyledHeroHeader from "./style";
 import BottomBar from "./bottom-bar/bottom-bar";
+import { trackEvent } from "../../utils/analytics";
 
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 
-const FullWidthSlide = ({ link, title, category, img, imgAlt }) => {
+const FullWidthSlide = ({ link, title, category, img, imgAlt, onClick }) => {
   return (
     <section className="slide-content">
-      <a href={link}>
+      <a href={link} onClick={onClick}>
         <div className="text">
           <div className="category">
             {category}
@@ -40,8 +41,14 @@ const HeroHeader = ({
   const [currentSlide, setCurrentSlide] = useState(1);
   const sliderRef = useRef(null);
 
-  const sliderNext = () => sliderRef?.current?.slickNext();
-  const sliderPrev = () => sliderRef?.current?.slickPrev();
+  const sliderNext = () => {
+    trackEvent('home_carousel_navigate', { direction: 'next', slide_index: currentSlide });
+    if (sliderRef.current) sliderRef.current.slickNext();
+  };
+  const sliderPrev = () => {
+    trackEvent('home_carousel_navigate', { direction: 'prev', slide_index: currentSlide });
+    if (sliderRef.current) sliderRef.current.slickPrev();
+  };
   const slideChanged = (oldIndex, newIndex) => setCurrentSlide(newIndex + 1);
 
 
@@ -75,6 +82,12 @@ const HeroHeader = ({
               category={item?.heroImageType ? 'Exterior' : 'Interior'}
               img={item?.heroImage?.url}
               imgAlt={item?.heroImage?.title}
+              onClick={() => trackEvent('project_click', {
+                project_slug: item?.slug,
+                project_type: item?.projectType,
+                source: 'home_carousel',
+                position: key + 1,
+              })}
             />
           ))
         }

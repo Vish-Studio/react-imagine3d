@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Route, BrowserRouter as Router, Routes, useLocation } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
@@ -7,6 +6,9 @@ import { LoadingContext } from './context/LoadingContext';
 
 import NavBar from './components/nav-bar/nav-bar';
 import TopBar from './components/top-bar/top-bar';
+import CookieConsent from './components/cookie-consent/cookie-consent';
+import usePageTracking from './utils/use-page-tracking';
+import useLinkTracking from './utils/use-link-tracking';
 
 import SOCIALS_QUERY from './gql-query/SocialsQuery';
 import FOOTER_QUERY from './gql-query/FooterQuery';
@@ -28,7 +30,12 @@ function ConditionalFooter({ socials, footerTitle }) {
   const { pageReady } = React.useContext(LoadingContext);
   if (location.pathname === '/') return null;
   if (!pageReady) return null;
-  return <Footer socials={socials} titleJson={footerTitle} />;
+  return (
+    <Footer
+      socials={socials}
+      titleJson={footerTitle}
+    />
+  );
 }
 
 function PageTransition({ children }) {
@@ -48,6 +55,12 @@ function PageTransition({ children }) {
   }, [location.pathname]);
 
   return <div ref={wrapperRef}>{children}</div>;
+}
+
+function PageTracker() {
+  usePageTracking();
+  useLinkTracking();
+  return null;
 }
 
 function App() {
@@ -71,6 +84,7 @@ function App() {
           onOpenMenu={menuBtnClick}
         />
         <Router>
+          <PageTracker />
           <NavBar
             isOpened={menuOpen}
             onOpenMenu={menuBtnClick}
@@ -79,22 +93,42 @@ function App() {
           <Routes>
             <Route
               path="/"
-              element={<PageTransition><HomePage socials={socials} /></PageTransition>}
+              element={
+                <PageTransition>
+                  <HomePage socials={socials} />
+                </PageTransition>
+              }
             />
             <Route
               path="/projects"
-              element={<PageTransition><Projects /></PageTransition>}
+              element={
+                <PageTransition>
+                  <Projects />
+                </PageTransition>
+              }
             />
             <Route
               path="/projects/:slug"
-              element={<PageTransition><ProjectItem /></PageTransition>}
+              element={
+                <PageTransition>
+                  <ProjectItem />
+                </PageTransition>
+              }
             />
             <Route
               path="/about-us"
-              element={<PageTransition><AboutUs /></PageTransition>}
+              element={
+                <PageTransition>
+                  <AboutUs />
+                </PageTransition>
+              }
             />
           </Routes>
-          <ConditionalFooter socials={socials} footerTitle={footerTitle} />
+          <ConditionalFooter
+            socials={socials}
+            footerTitle={footerTitle}
+          />
+          <CookieConsent />
         </Router>
       </div>
     </LoadingContext.Provider>
