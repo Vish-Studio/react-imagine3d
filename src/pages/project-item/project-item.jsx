@@ -10,6 +10,8 @@ import { StyledProjectAbout, StyledProjectHero, StyledProjectItem } from './styl
 import { useQuery } from '@apollo/client';
 import PROJECT_ITEM_BY_SLUG_QUERY from '../../gql-query/ProjectItemBySlugQuery';
 import { getRelativePath } from '../../utils/get-relative-path';
+import { trackEvent } from '../../utils/analytics';
+import useScrollDepth from '../../utils/use-scroll-depth';
 
 const sliderSettings = {
   arrows: false,
@@ -33,23 +35,39 @@ const sliderSettings = {
   ]
 };
 
-const CommonSlider = ({ images }) => {
+const CommonSlider = ({ images, slug, section }) => {
+  const lastInteraction = useRef(0);
+  const markInteraction = () => { lastInteraction.current = Date.now(); };
+
+  // autoplay also changes slides, so only report changes shortly after a user gesture
+  const onBeforeChange = (oldIndex, newIndex) => {
+    if (Date.now() - lastInteraction.current < 1500) {
+      trackEvent('gallery_interaction', {
+        project_slug: slug,
+        section,
+        slide_index: newIndex,
+      });
+    }
+  };
+
   return (
-    <Slider {...sliderSettings}>
-      {images &&
-        images.map((image, index) => (
-          <div
-            key={index}
-            className="slick-image-wrapper"
-          >
-            <img
-              src={image.url}
-              alt="Slider"
-              loading="lazy"
-            />
-          </div>
-        ))}
-    </Slider>
+    <div onPointerDown={markInteraction} onPointerUp={markInteraction}>
+      <Slider {...sliderSettings} beforeChange={onBeforeChange}>
+        {images &&
+          images.map((image, index) => (
+            <div
+              key={index}
+              className="slick-image-wrapper"
+            >
+              <img
+                src={image.url}
+                alt="Slider"
+                loading="lazy"
+              />
+            </div>
+          ))}
+      </Slider>
+    </div>
   );
 };
 
@@ -119,7 +137,7 @@ const AboutSection = ({ description }) => {
   );
 };
 
-const GallerySection = ({ tag, title, description, images }) => {
+const GallerySection = ({ tag, title, description, images, slug }) => {
   const sectionRef = useRef(null);
 
   useGSAP(() => {
@@ -147,10 +165,15 @@ const GallerySection = ({ tag, title, description, images }) => {
       <h2>{title}</h2>
       <p>{description}</p>
       <div className="slides">
-        <CommonSlider images={images} />
+        <CommonSlider images={images} slug={slug} section={title.toLowerCase()} />
       </div>
     </div>
   );
+};
+
+const ScrollDepthTracker = ({ slug }) => {
+  useScrollDepth(slug);
+  return null;
 };
 
 const ProjectItem = () => {
@@ -183,6 +206,7 @@ const ProjectItem = () => {
 
   return (
     <StyledProjectItem>
+      <ScrollDepthTracker slug={project.slug || currentProjectSlug} />
       <HeroSection
         heroImage={project.heroImage.url}
         title={project.title}
@@ -199,6 +223,7 @@ const ProjectItem = () => {
         title="Interior"
         description={project.interiorViewsDescription}
         images={project.interiorViewsCollection.items}
+        slug={project.slug || currentProjectSlug}
       />
 
       <GallerySection
@@ -206,6 +231,7 @@ const ProjectItem = () => {
         title="Exterior"
         description={project.exteriorViewsDescription}
         images={project.exteriorViewsCollection.items}
+        slug={project.slug || currentProjectSlug}
       />
     </StyledProjectItem>
   );

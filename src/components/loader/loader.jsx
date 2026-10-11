@@ -11,13 +11,7 @@ const Loader = ({ setLoader }) => {
 
     useEffect(() => {
         const tl = gsap.timeline({
-            onComplete: () => {
-                gsap.to(container.current, {
-                    opacity: 0,
-                    duration: 0.5,
-                    onComplete: () => setLoader(false)
-                });
-            }
+            onComplete: () => setLoader(false)
         });
 
         tl.fromTo(logoRef.current,
@@ -28,6 +22,9 @@ const Loader = ({ setLoader }) => {
                 { width: '0%' },
                 { width: '100%', duration: 1.8, ease: 'power1.inOut' },
                 '-=0.2'
+            )
+            .to(container.current,
+                { opacity: 0, pointerEvents: 'none', visibility: 'hidden', duration: 0.5 }
             );
 
         return () => tl.kill();
